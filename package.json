@@ -1,0 +1,26 @@
+{
+  "name": "reachinbox-scheduler",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace @reachinbox/api run dev",
+    "dev:web": "npm --workspace reachinbox-web run dev",
+    "build": "npm run prisma:generate && npm run build:shared && npm run build:api && npm run build:web",
+    "build:shared": "npm --workspace @reachinbox/shared run build",
+    "build:api": "npm --workspace @reachinbox/api run build",
+    "build:web": "npm --workspace reachinbox-web run build",
+    "typecheck": "npm run prisma:generate && npm run typecheck:shared && npm run build:api && npm run typecheck:web",
+    "typecheck:shared": "npm --workspace @reachinbox/shared run build",
+    "typecheck:web": "npm --workspace reachinbox-web run typecheck",
+    "test": "npm run build:shared && npm --workspace @reachinbox/api test",
+    "prisma:generate": "npm --workspace @reachinbox/api run prisma:generate",
+    "prisma:migrate": "npm --workspace @reachinbox/api run prisma:migrate",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down"
+  }
+}
