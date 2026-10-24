@@ -7,6 +7,50 @@ controlling sender pacing, and inspecting delivery state from a focused React
 mail workspace. It is designed for a realistic local/demo deployment rather
 than a simulated UI-only experience.
 
+## Live demo
+
+Open the deployed application here:
+
+**[https://web-ashy-pi-63.vercel.app/login](https://web-ashy-pi-63.vercel.app/login)**
+
+ReachInbox is useful when a team needs a calmer, more controlled way to send
+outreach: recipients can be imported, messages can be paced, attachments can be
+stored with the campaign, and delivery state can be reviewed from one mailbox
+workspace. The backend uses durable database state, Redis-backed queues, and
+idempotent schedule creation so retrying the same request does not create a
+second copy of the same email queue.
+
+### How to try it
+
+1. Open the live demo and choose **Continue with Google** or create an
+   email/password account.
+2. Open **Compose** and choose a sender identity.
+3. Add recipient chips or upload a CSV/TXT recipient list.
+4. Write the subject and rich HTML message, then optionally add attachments.
+5. Set the delay/hourly limit and choose **Send Later**.
+6. Use the **Scheduled** and **Sent** views to inspect status, open message
+   details, and follow the Ethereal preview link for demo delivery.
+
+The demo uses Ethereal SMTP, so it proves the delivery workflow without sending
+email to real recipients. Google OAuth requires a configured test account when
+the OAuth consent screen is in testing mode.
+
+### Screenshots and walkthrough
+
+The repository includes sanitized screenshots of the live login experience and
+the production deployment:
+
+![ReachInbox live login screen](docs/screenshots/reachinbox-login.png)
+
+![ReachInbox production deployment](docs/screenshots/production-deployment.png)
+
+Watch the short visual walkthrough in the repository:
+
+![ReachInbox walkthrough](docs/demo/reachinbox-walkthrough.gif)
+
+- [Download the MP4 walkthrough](docs/demo/reachinbox-walkthrough.mp4)
+- [View the walkthrough source script](docs/demo/build_demo_video.py)
+
 ## Highlights
 
 - Authenticated email/password sessions with optional Google OAuth.
@@ -350,11 +394,24 @@ Supabase        → PostgreSQL/Prisma database
 Ethereal        → fake SMTP delivery and preview URLs
 ```
 
-For Vercel, set the project root to `apps/web` and configure
-`VITE_API_URL` to the public Railway API URL. For Railway, deploy the root
-`Dockerfile`, set `DATABASE_URL`, `REDIS_URL`, `WEB_ORIGIN`, and
+Current demo deployment:
+
+| Component | URL |
+| --- | --- |
+| Frontend | <https://web-ashy-pi-63.vercel.app/login> |
+| API readiness | <https://api-production-8f03.up.railway.app/readyz> |
+| Google OAuth start | <https://api-production-8f03.up.railway.app/auth/google> |
+
+For Vercel, set the project root to `apps/web` and configure `VITE_API_URL`
+and, optionally, `VITE_GOOGLE_AUTH_URL` to the public Railway API URL, for
+example `https://api.example.com` and `https://api.example.com/auth/google`.
+The frontend also guards against a loopback OAuth URL accidentally leaking from
+local `.env` values into a production build. For Railway, deploy the root
+`Dockerfile`, set `DATABASE_URL`, `REDIS_URL`, `WEB_ORIGIN`, `WEB_ORIGINS`, and
 `SESSION_SECRET`, then let the container run `prisma migrate deploy` before
-starting the API and worker.
+starting the API and worker. `WEB_ORIGINS` is a comma-separated list for
+additional Vercel deployment URLs; production sessions use secure cross-site
+cookies for the Vercel-to-Railway setup.
 
 ## Assumptions, shortcuts, and trade-offs
 

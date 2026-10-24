@@ -21,6 +21,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+  // Optional comma-separated additional browser origins for deployment URLs.
+  WEB_ORIGINS: optionalString,
   SESSION_SECRET: z.string().min(16).default("local-development-session-secret-change-me"),
   ALLOW_DEV_AUTH: booleanFromEnv.default(false),
 

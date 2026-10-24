@@ -200,9 +200,26 @@ function parseUser(payload: unknown): User {
   };
 }
 
+function isLoopbackHost(value: string): boolean {
+  try {
+    const hostname = new URL(value, window.location.origin).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
 export const api = {
   getGoogleAuthUrl(): string {
-    return import.meta.env.VITE_GOOGLE_AUTH_URL || `${apiBaseUrl}/auth/google`;
+    const configuredAuthUrl = (import.meta.env.VITE_GOOGLE_AUTH_URL ?? "").trim();
+    const shouldUseConfiguredUrl = Boolean(configuredAuthUrl) && (useDevProxy || !isLoopbackHost(configuredAuthUrl));
+    if (shouldUseConfiguredUrl) return configuredAuthUrl;
+
+    // A local .env can accidentally be included in a production Vercel build.
+    // Never send a deployed browser back to the user's own localhost; derive the
+    // OAuth route from the configured production API instead.
+    const authBaseUrl = configuredBaseUrl || apiBaseUrl;
+    return authBaseUrl ? `${authBaseUrl}/auth/google` : "/auth/google";
   },
 
   async getCurrentUser(): Promise<User> {

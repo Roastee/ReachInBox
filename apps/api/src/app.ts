@@ -28,6 +28,11 @@ export interface AppDependencies {
 export function createApp(dependencies: AppDependencies = {}) {
   const database = dependencies.prisma || defaultPrisma;
   const redis = dependencies.redis || defaultRedis;
+  const allowedOrigins = new Set(
+    [env.WEB_ORIGIN, ...env.WEB_ORIGINS.split(",")]
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  );
 
   configureGoogleAuth(database);
 
@@ -38,7 +43,15 @@ export function createApp(dependencies: AppDependencies = {}) {
   // in production.
   app.set("trust proxy", 1);
   app.use(helmet());
-  app.use(cors({ origin: env.WEB_ORIGIN, credentials: true }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Keep non-browser requests usable for health checks and server calls.
+        callback(null, !origin || allowedOrigins.has(origin));
+      },
+      credentials: true,
+    }),
+  );
   app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
   app.use(express.json({ limit: "1mb" }));
   app.use(express.text({ type: ["text/csv", "text/plain"], limit: env.MAX_UPLOAD_BYTES }));
@@ -50,7 +63,9 @@ export function createApp(dependencies: AppDependencies = {}) {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        sameSite: "lax",
+        // Vercel and Railway are different sites, so production sessions need
+        // SameSite=None for credentialed browser fetches to work.
+        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
         secure: env.NODE_ENV === "production",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       },
